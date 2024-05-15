@@ -23,12 +23,8 @@ def create_file(filetype: str, filename: str):
     if filetype == "txt":
         create_txt(filepath)
     elif filetype == "epub":
-        print(f"{filetype} : Currently not supported")
-        return -1
         create_epub(filepath)
     elif filetype == "pdf":
-        print(f"{filetype} : Currently not supported")
-        return -1
         create_pdf(filepath)
     else:
         return -1
@@ -39,12 +35,8 @@ def append_file(filetype: str, filePath: str, chapter: str, paragraphs: list):
     if filetype == "txt":
         append_txt(filePath, chapter, paragraphs)
     elif filetype == "epub":
-        print(f"{filetype} : Currently not supported")
-        return -1
         append_epub(filePath, chapter, paragraphs)
     elif filetype == "pdf":
-        print(f"{filetype} : Currently not supported")
-        return -1
         append_pdf(filePath, chapter, paragraphs)
     else:
         return -1
@@ -111,14 +103,14 @@ def create_epub(
 
 
 def append_epub(path: str, chapter: str, paragraphs: list):
+    # read epub
+    book = epub.read_epub(path)
 
     c1 = epub.EpubHtml(title="Chapter 1", file_name="chap_01.xhtml", lang="en")
-    c1.content = "<h1>Chapter 1</h1><p>%s</p>" % data
+    c1.content = "<h1>Chapter 1</h1><p>%s</p>" % "content"
 
     # add chapter
     book.add_item(c1)
 
     # define Table Of Contents
     book.toc = (c1,)
-
-    # add default NCX and Nav file
