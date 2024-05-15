@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd  # remove if i can make nice tables
 from alive_progress import alive_bar, config_handler
-
+import to_file
 
 url = "https://freewebnovel.com"
 searchUrl = url + "/search/"
@@ -48,13 +48,21 @@ while selected_novel > max_value or selected_novel < min_value:
         input("Enter the number corresponding to the novel you want to read: ")
     )
     if selected_novel > max_value or selected_novel < min_value:
-        print("Incorrect value, please choose a value fitting corresponding to a novel")
+        print(
+            "Incorrect value, please choose a value fitting corresponding to a novel."
+        )
 
 
 # Retrieve selected novel
 novel_info = df.loc[selected_novel]
 
 print("Selected:", novel_info.Title, "with rating", novel_info.Score)
+
+file_format = -1
+while file_format == -1:
+    file_format = input("Enter the wanted file format: ")
+    if file_format == -1:
+        print("Please choose between txt, epub or pdf.")
 
 
 if novel_info.Website == "freewebnovel.com":
@@ -72,6 +80,9 @@ def get_chapter_info(url: str):
     next_chapter = website + soup.select_one(
         "#main1 > div > div > div.ul-list7 > ul > li:nth-child(4) > a"
     ).get("href")
+    current_chapter = soup.select_one("#main1 > div > div > div.top > span").get_text(
+        strip=True
+    )
 
     # Check if the current chapter is the last chapter
     if url.split("-")[-1] == novel_info.Chapters:
@@ -82,22 +93,27 @@ def get_chapter_info(url: str):
     for element in content:
         paragraphs.append(element.get_text(strip=True))
 
-    return paragraphs, next_chapter
+    #TODO check if the website is freewebnovel.com
+    paragraphs = paragraphs[:-1]  # Remove last paragraph (advertisement)
+
+    return current_chapter, paragraphs, next_chapter
 
 
 config_handler.set_global(spinner="waves")
 
-with open(
-    f'output/{novel_info.Title.replace(" ", "-")}.txt', "w", encoding="utf-8"
-) as file:
+# Create file
+filePath = to_file.create_file(file_format, f'{novel_info.Title.replace(" ", "-")}.txt')
+
+if filePath == -1:
+    print("Error creating file. Supported filetype not submitted")
+else:
     with alive_bar(int(novel_info.Chapters), title="Chapters") as bar:
         while True:
-            paragraphs, novel_url = get_chapter_info(novel_url)
-            for paragraph in paragraphs:
-                file.write(paragraph + "\n\n")
+            current_chapter, paragraphs, novel_url = get_chapter_info(novel_url)
+            # append to file
+            to_file.append_file(file_format, filePath, current_chapter, paragraphs)
             bar()
 
-            # Somehow figure out we're on the last chapter and there is no more chapters
+            # Reach last chapter, so we exit
             if novel_url == -1:
-                print(novel_url, novel_info.Website + novel_info.Link)
                 break
