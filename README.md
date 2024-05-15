@@ -22,12 +22,14 @@ Provide instructions on how to install your project here.
 Provide instructions on how to use your project here.
 
 ## Progress
-
-This section tracks the progress of adding support for different websites. The status of each website is indicated by the following colors:
-
 - **Green**: Support has been completed.
 - **Yellow**: Support is currently in progress.
 - **Red**: Support has not started yet.
+
+### Websites
+This section tracks the progress of adding support for different websites. The status of each website is indicated by the following colors:
+
+
 
 | Website | Status  |
 | ------- | ------  |
@@ -36,6 +38,15 @@ This section tracks the progress of adding support for different websites. The s
 | readnovelfull.com | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png)|
 | novelfull.com     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 
+
+### Features
+| Feature | Status  |
+| ------- | ------  |
+| Cover txt  | [#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| Cover photo  | [#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| Write to epub   |![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| Write to pdf | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png)|
+| novelfull.com     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 ## License
 
 Include information about your project's license here.
