@@ -33,20 +33,21 @@ This section tracks the progress of adding support for different websites. The s
 
 | Website | Status  |
 | ------- | ------  |
-| freewebnovel.com  | ![#4fe10f](https://placehold.co/15x15/lime/lime.png) |
-| wuxiaworld.site   |![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| readnovelfull.com | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png)|
+| freewebnovel.com  | ![#4fe10f](https://placehold.co/15x15/lime/lime.png)     |
+| wuxiaworld.site   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| readnovelfull.com | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 | novelfull.com     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 
 
 ### Features
 | Feature | Status  |
 | ------- | ------  |
-| Write to txt  | ![#4fe10f](https://placehold.co/15x15/lime/lime.png) |
-| Cover photo  | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| Write to epub   |![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| Write to pdf | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png)|
-| novelfull.com     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| Write to txt  | ![#4fe10f](https://placehold.co/15x15/lime/lime.png)     |
+| Cover photo   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| Write to epub | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| Write to pdf  | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+| novelfull.com | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+
 ## License
 
 Include information about your project's license here.
