@@ -15,9 +15,9 @@ class Freewebnovel(Website):
         
         
 
-    def search(self, search: str) -> list:
+    def search(self, searchkey: str):
 
-        payload = {"searchkey": search} 
+        payload = {"searchkey": searchkey} 
         response = requests.post(self.searchUrl, data=payload, headers=self.headers)#, timeout=1)
 
         soup = BeautifulSoup(response.text, "html.parser")

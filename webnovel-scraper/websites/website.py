@@ -26,13 +26,28 @@ class Website:
             "website":None
         }
 
-    def search(self, searchstring: str) -> list[list]:
+    def search(self, searchkey: str) -> list[list]:
+        """Search website for searchkey
+
+        Args:
+            searchkey (str): parameter sent to the website
+
+        Returns:
+            list[list]: list of hits, each hit containing information about the hit
+        """
         print("Not implemented {search}")
 
     def scrape_novel(self) -> tuple[int,str,int]:
+        """Scrapes webnovel
+
+        Returns:
+            tuple[int,str,int]: List of chapters, chapters are list of paragraphs (lines divided by '\\n')
+        """
         print("Not implemented {scrape_novel}")
 
     def setFormat(self) -> None:
+        """Chooses format to save file with
+        """
         format = ''
         while format not in self.supportedFormats and format.upper() != 'Q':
             format = input(f"Enter file format {self.supportedFormats}: ")
@@ -46,7 +61,9 @@ class Website:
         self.chosenNovel = novel
 
 
-    def saveFile(self) -> None:  
+    def saveFile(self) -> None:
+        """Saves file to specified format
+        """
         if self.format == 'txt':
             self.saveTXT()    
         elif self.format == 'pdf':
@@ -55,6 +72,8 @@ class Website:
             self.saveEPUB()
     
     def saveTXT(self) -> None:
+        """Saves downloaded novel to PDF format
+        """
         with open(f'../output/{self.chosenNovel['Title'].replace(' ', '-')}.txt', 'w', encoding="utf-8") as f:
             for chapter in self.chapters:
                 for paragraph in chapter:
@@ -63,9 +82,13 @@ class Website:
         
 
     def savePDF(self) -> None:
+        """Saves downloaded novel to PDF format
+        """
         pass
 
     def saveEPUB(self) -> None:
+        """Saves downloaded novel to ePub format
+        """
         book = epub.EpubBook()
 
         book.set_identifier('sample123456')

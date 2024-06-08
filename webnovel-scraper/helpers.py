@@ -52,7 +52,14 @@ def select_file_format():
 
 
 def select_novel(df: pd.DataFrame)-> pd.Series:
+    """Prompts the user to select a novel from a DataFrame by entering a corresponding number
 
+    Args:
+        df (pd.DataFrame): A DataFrame containing novel information with an index.
+
+    Returns:
+        pd.Series: A Series containing the selected novel's information
+    """
 
     # Get min and max of possible values
     min_value = df.index.min()

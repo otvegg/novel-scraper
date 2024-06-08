@@ -4,6 +4,11 @@ import pandas as pd
 from websites.website import Website
 
 def initiateClasses() -> list[Website]:
+    """Loads website instances from Python files in the 'websites' directory
+
+    Returns:
+        list[Website]: A list of instantiated website objects
+    """
     website_instances = []
 
     files = os.listdir("./websites")
@@ -28,6 +33,21 @@ def initiateClasses() -> list[Website]:
     return website_instances
 
 def searchWebsites(website_instances:list[Website],search:str) -> pd.DataFrame:
+    """Searches website instances for the specified search term.
+
+    Args:
+        website_instances (list[Website]): A list of instantiated website objects
+        search (str): The search term to look for
+
+    Returns:
+        pd.DataFrame: A DataFrame containing search results with columns:\n
+            - "Title": Title of the hit
+            - "Score": Relevance score
+            - "Chapters": Number of chapters
+            - "Website": Name of the website
+            - "ChapterUrl": URL of the chapter
+            - "instance": Website instance
+    """
     results = []
     for website in website_instances:
         hits = website.search(search)
@@ -44,11 +64,3 @@ def searchWebsites(website_instances:list[Website],search:str) -> pd.DataFrame:
     df["Score"] = df["Score"].astype('float32')
     df.index += 1
     return df
-
-def collectNovel(novel:pd.Series):
-    website = novel.instance
-
-    # choose format
-
-    # actually download
-    website.scrape_novel(novel)
