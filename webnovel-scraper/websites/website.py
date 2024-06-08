@@ -1,5 +1,8 @@
 import pandas as pd
+from ebooklib import epub
 
+# Notes:
+# ipv4 might cause read timeouts
 
 class Website:
     def __init__(self):
@@ -7,16 +10,26 @@ class Website:
         self.chapters:list[list[str]] = []
         self.headers = {"User-Agent": "Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36"}
         self.format = None
-        self.supportedFormats = ['txt'] #  'epub', 'pdf'
+        self.supportedFormats = ['txt', 'epub'] #  'epub', 'pdf'
         self.chosenNovel:pd.Series = None
+        self.novel = {
+            "title":None,
+            "author":None,
+            "description":None,
+            "score":None,
+            "nChapters":None,
+            "original_language":None,
+            "alternate_names":None,
+            "status":None,
+            "instanse":None,
+            "chapterUrl":None,
+            "website":None
+        }
 
     def search(self, searchstring: str) -> list[list]:
         print("Not implemented {search}")
 
-    def select_novel(self, index: int):
-        print("Not implemented {select_novel}")
-
-    def scrape_novel(self, novel: str) -> tuple[int,str,int]:
+    def scrape_novel(self) -> tuple[int,str,int]:
         print("Not implemented {scrape_novel}")
 
     def setFormat(self) -> None:
@@ -33,7 +46,7 @@ class Website:
         self.chosenNovel = novel
 
 
-    def saveFile(self):
+    def saveFile(self) -> None:  
         if self.format == 'txt':
             self.saveTXT()    
         elif self.format == 'pdf':
@@ -41,19 +54,72 @@ class Website:
         elif self.format == 'epub':
             self.saveEPUB()
     
-    def saveTXT(self):
-        with open(f'../output/{self.chosenNovel['Title'].replace(' ', '-')}.txt', 'w') as f:
+    def saveTXT(self) -> None:
+        with open(f'../output/{self.chosenNovel['Title'].replace(' ', '-')}.txt', 'w', encoding="utf-8") as f:
             for chapter in self.chapters:
                 for paragraph in chapter:
                     f.write(paragraph)
                     f.write('\n\n')
         
+
+    def savePDF(self) -> None:
         pass
 
-    def savePDF(self):
-        pass
+    def saveEPUB(self) -> None:
+        book = epub.EpubBook()
 
-    def saveEPUB(self):
-        pass
+        book.set_identifier('sample123456')
+        book.set_title(self.chosenNovel['Title'])
+        book.set_language('en')
+
+        if self.novel["author"]:
+            book.add_author(self.novel["author"])
+
+        if self.novel["description"]:
+            book.add_metadata('DC', 'description', self.novel["description"])
+
+        if self.novel["score"]:
+            book.add_metadata('DC', 'description', self.novel["score"])
+        if self.novel["nChapters"]:
+            book.add_metadata('DC', 'description', self.novel["nChapters"])
+        if self.novel["original_language"]:
+            book.add_metadata('DC', 'description', self.novel["original_language"])
+        if self.novel["status"]:
+            book.add_metadata('DC', 'description', self.novel["status"])
+        if self.novel["alternate_names"]:
+            book.add_metadata('DC', 'description', self.novel["alternate_names"])
+        if self.novel["website"]:
+            book.add_metadata('DC', 'description', self.novel["website"])
+
+        toc = []
+        all_chapters = []
+        for i in range(0,len(self.chapters)):
+            echapter = epub.EpubHtml(title=f"Chapter {i}", file_name=f"chapter-{i}.xhtml", lang="en")
+            chapter_link = epub.Link(f"chapter-{i}.xhtml", f"Chapter {i}", f"chapter-{i}")
+            toc.append(chapter_link)
+            chapterContent = ''
+            k = 0
+
+            # TODO: Add image to the chapter header 
+            # TODO: Chapter header
+            for paragraph in self.chapters[i]:
+                if k == 0:
+                    print(paragraph)
+                k += 1
+                chapterContent += f"<p>{paragraph}</p>"
+                
+            echapter.set_content(f"<p>{chapterContent}</p>")
+            
+            all_chapters.append(echapter)
+            book.add_item(echapter)
+            
+
+        all_chapters.insert(0,"nav")
+
+        book.spine =  all_chapters
+        book.toc = tuple(toc)
 
 
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        epub.write_epub(f"../output/{self.chosenNovel['Title'].replace(' ', '-')}.epub", book)
