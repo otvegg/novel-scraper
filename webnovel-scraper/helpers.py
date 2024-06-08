@@ -4,7 +4,7 @@ import pycountry
 allowed_formats = ["txt"]  # To add: epub, pdf
 
 
-def is_iso_639_compliant(tag: str):
+def is_iso_639_compliant(tag: str) -> bool:
     """
     Check if a language tag is compliant with ISO 639-1 or ISO 639-3.
 
@@ -51,8 +51,8 @@ def select_file_format():
     return file_format
 
 
-def select_novel(df: pd.DataFrame):
-    print(df)
+def select_novel(df: pd.DataFrame)-> pd.Series:
+
 
     # Get min and max of possible values
     min_value = df.index.min()
