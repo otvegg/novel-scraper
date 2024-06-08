@@ -16,15 +16,20 @@ class Freewebnovel(Website):
         
 
     def search(self, search: str) -> list:
-        print(f"chapterUrl:{self.chapterUrl}, format:{self.format}")
 
         payload = {"searchkey": search} 
-        response = requests.post(self.searchUrl, data=payload, headers=self.headers, timeout=1)
+        response = requests.post(self.searchUrl, data=payload, headers=self.headers)#, timeout=1)
 
         soup = BeautifulSoup(response.text, "html.parser")
         elements = soup.select(
             "body > div.main > div.wp > div.row-box > div.col-content > div > div > div > div > div.txt"
         )
+        
+
+        # TODO: advance the search so we check each novels author , status, original language, alternative names
+        # Probably requires an additional query for each novel
+        
+        # TODO: Estimate download time (chapters * average scrape time)
         table = []
         for element in elements:
             title = element.select_one("div > h3.tit > a").get_text(strip=True)
@@ -60,7 +65,7 @@ class Freewebnovel(Website):
                 
                 bar()
 
-                response = requests.get(curUrl, headers=self.headers, timeout=1)
+                response = requests.get(curUrl, headers=self.headers)
                 soup = BeautifulSoup(response.text, "html.parser")
                 next_chapter = self.chapterUrl + soup.select_one(
                     "#main1 > div > div > div.ul-list7 > ul > li:nth-child(4) > a"
@@ -75,5 +80,3 @@ class Freewebnovel(Website):
                 self.chapters.append(paragraphs)
 
                 curUrl = next_chapter
-
-    

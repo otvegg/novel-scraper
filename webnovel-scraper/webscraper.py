@@ -8,6 +8,7 @@ start = timeit.default_timer()
 
 # TODO: Optionally make a selection of what websites to search
 websites = core.initiateClasses()
+# TODO: get search key
 novels = core.searchWebsites(websites, "martial world")
 print(novels)
 novel = helpers.select_novel(novels)

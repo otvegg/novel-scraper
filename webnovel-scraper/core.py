@@ -10,7 +10,7 @@ def initiateClasses() -> list[Website]:
 
     # Filter out all python files that start with 'website_'
     website_files = [f for f in files if f.startswith("website_") and f.endswith(".py")]
-    print("Files", website_files)
+    #print("Files", website_files)
 
     # Iterate over all website files
     for website_file in website_files:
