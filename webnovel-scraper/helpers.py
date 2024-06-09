@@ -81,3 +81,39 @@ def select_novel(df: pd.DataFrame)-> pd.Series:
 
     print("Selected:", novel_info.Title, "with rating", novel_info.Score)
     return novel_info
+
+def cleanChapterHeader(header:str) -> str:
+    """
+    Clean the header of a chapter title by removing initial numbers and 'Chapter' prefix.
+
+    Parameters:
+        header (str): The header of the chapter to be cleaned.
+
+    Returns:
+        str: The cleaned chapter header.
+
+    Example:
+        >>> cleanChapterHeader('Chapter 1: The Beginning')
+        'The Beginning'
+
+    Note:
+        This function removes any initial numbers, 'Chapter' prefix, and leading colon from the header.
+    """
+    def remove_initial_nums(s):
+        i = 0
+        while s[i].isdigit():
+            i += 1
+        return i
+
+    s = header
+    if header.lower().startswith("chapter"):
+        s = header[7:].strip()
+    
+    chap_digits = remove_initial_nums(s)
+    s = s[chap_digits:].strip()
+    
+    #check if the next is a colon
+    if s[0] == ':':
+        s = s[1:].strip()
+    
+    return s

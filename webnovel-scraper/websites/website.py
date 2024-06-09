@@ -1,6 +1,6 @@
 import pandas as pd
 from ebooklib import epub
-
+import helpers
 # Notes:
 # ipv4 might cause read timeouts
 
@@ -98,44 +98,28 @@ class Website:
         if self.novel["author"]:
             book.add_author(self.novel["author"])
 
-        if self.novel["description"]:
-            book.add_metadata('DC', 'description', self.novel["description"])
+        metadata_fields = ["description", "score", "nChapters", "original_language", "status", "alternate_names", "website"]
+        for field in metadata_fields:
+            if self.novel[field]:
+                book.add_metadata('DC', field, self.novel[field])
 
-        if self.novel["score"]:
-            book.add_metadata('DC', 'description', self.novel["score"])
-        if self.novel["nChapters"]:
-            book.add_metadata('DC', 'description', self.novel["nChapters"])
-        if self.novel["original_language"]:
-            book.add_metadata('DC', 'description', self.novel["original_language"])
-        if self.novel["status"]:
-            book.add_metadata('DC', 'description', self.novel["status"])
-        if self.novel["alternate_names"]:
-            book.add_metadata('DC', 'description', self.novel["alternate_names"])
-        if self.novel["website"]:
-            book.add_metadata('DC', 'description', self.novel["website"])
 
+        # TODO: Add image to the chapter header 
+        # TODO: Chapter styling
         toc = []
         all_chapters = []
-        for i in range(0,len(self.chapters)):
+        for i, chapter in enumerate(self.chapters):
             echapter = epub.EpubHtml(title=f"Chapter {i}", file_name=f"chapter-{i}.xhtml", lang="en")
-            chapter_link = epub.Link(f"chapter-{i}.xhtml", f"Chapter {i}", f"chapter-{i}")
+            cleanedHeader = helpers.cleanChapterHeader(chapter[0])
+            chapter_link = epub.Link(f"chapter-{i+1}.xhtml", f"{cleanedHeader}", f"chapter-{i+1}")
             toc.append(chapter_link)
-            chapterContent = ''
-            k = 0
 
-            # TODO: Add image to the chapter header 
-            # TODO: Chapter header
-            for paragraph in self.chapters[i]:
-                if k == 0:
-                    print(paragraph)
-                k += 1
-                chapterContent += f"<p>{paragraph}</p>"
-                
-            echapter.set_content(f"<p>{chapterContent}</p>")
-            
+            chapter_header = f"<h1 style='font-size: 24px;'>{chapter[0]}</h1>"
+            chapter_content = ''.join([f"<p>{paragraph}</p>" for paragraph in chapter[1:]])
+            echapter.set_content(f"{chapter_header}{chapter_content}")
+        
             all_chapters.append(echapter)
             book.add_item(echapter)
-            
 
         all_chapters.insert(0,"nav")
 

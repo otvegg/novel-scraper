@@ -58,7 +58,7 @@ class Freewebnovel(Website):
         curUrl = chapterUrl
         i = 0
 
-        # implement parallell requests (remove the next chapter, and just use i instead)
+        # TODO: implement parallell requests (remove the next chapter, and just use i instead)
         # probably a dict {chap number: contents} and then sort by chap number
         with alive_bar(total=int(nChapters)) as bar:
             for i in range(1, nChapters+1):
