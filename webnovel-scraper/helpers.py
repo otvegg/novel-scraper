@@ -1,5 +1,6 @@
 import pandas as pd
 import pycountry
+from tabulate import tabulate
 
 allowed_formats = ["txt"]  # To add: epub, pdf
 
@@ -79,7 +80,7 @@ def select_novel(df: pd.DataFrame)-> pd.Series:
     # Retrieve selected novel
     novel_info = df.loc[selected_novel]
 
-    print("Selected:", novel_info.Title, "with rating", novel_info.Score)
+    print("Selected:", novel_info.Title, "with rating", novel_info.score)
     return novel_info
 
 def cleanChapterHeader(header:str) -> str:
@@ -117,3 +118,12 @@ def cleanChapterHeader(header:str) -> str:
         s = s[1:].strip()
     
     return s
+
+def prettyPrintTable(table:pd.DataFrame) -> None:
+
+    newtable = table[["Title", "score", "status", "Chapters","author"]].copy(deep=True)
+
+    # only keep main author
+    newtable["author"] = newtable["author"].str.split('&').str[0]
+
+    print(tabulate(newtable, headers='keys', tablefmt='psql'))
