@@ -1,2 +1,3 @@
 output/*
 __pycache__/
+webnovel-scraper/test.py

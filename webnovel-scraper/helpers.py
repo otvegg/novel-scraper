@@ -1,56 +1,7 @@
 import pandas as pd
-import pycountry
 from tabulate import tabulate
-
-allowed_formats = ["txt"]  # To add: epub, pdf
-
-
-def is_iso_639_compliant(tag: str) -> bool:
-    """
-    Check if a language tag is compliant with ISO 639-1 or ISO 639-3.
-
-    Parameters:
-        tag (str): The language tag to be checked.
-
-    Returns:
-        bool: True if the tag is compliant, False otherwise.
-
-    Example:
-        >>> is_iso_639_compliant('nn')
-        True
-
-    Note:
-        This function uses the pycountry library to check if the tag is in ISO 639-1 or ISO 639-3.
-        If the tag is not found or an error occurs, False is returned.
-    """
-    try:
-        # Check if the tag is in ISO 639-1 or ISO 639-3
-        if pycountry.languages.get(alpha_2=tag) or pycountry.languages.get(alpha_3=tag):
-            return True
-        else:
-            return False
-    except (KeyError, AttributeError):
-        return False
-
-
-def select_file_format():
-    """
-    Prompt the user to enter a desired file format and validate the input. Q to exit.
-
-    Returns:
-        str: The selected file format.
-    """
-    file_format = -1
-    while file_format not in allowed_formats:
-        file_format = input("Enter the wanted file format: ")
-
-        if file_format.upper() == "Q":
-            return -1
-
-        if file_format not in allowed_formats:
-            print(f"Please choose between [{', '.join(allowed_formats)}].")
-    return file_format
-
+import re
+import unicodedata
 
 def select_novel(df: pd.DataFrame)-> pd.Series:
     """Prompts the user to select a novel from a DataFrame by entering a corresponding number
@@ -83,24 +34,25 @@ def select_novel(df: pd.DataFrame)-> pd.Series:
     print("Selected:", novel_info.Title, "with rating", novel_info.score)
     return novel_info
 
-def cleanChapterHeader(header:str) -> str:
-    """
-    Clean the header of a chapter title by removing initial numbers and 'Chapter' prefix.
+def cleanChapterHeader(header1:str,header2:str) -> str:
 
-    Parameters:
-        header (str): The header of the chapter to be cleaned.
+    
+    # Use the longer part (assuming it's more likely to contain the full title)
+    main_part = max([header1,header2], key=len).strip()
 
-    Returns:
-        str: The cleaned chapter header.
+    patterns = [
+        r'^Chapter\s+[-]?\d+:?\s*-?\s*',  # Matches "Chapter 13:", "Chapter -2:", etc.
+        r'^Chapter\s+[-]?\d+\s+',         # Matches "Chapter 13 ", "Chapter -2 ", etc.
+        r'^\d+:?\s*',                     # Matches "1:", "13 ", etc.
+        r'^Chapter\s+',                   # Matches "Chapter " at the beginning
+    ]
 
-    Example:
-        >>> cleanChapterHeader('Chapter 1: The Beginning')
-        'The Beginning'
+    for pattern in patterns:
+        main_part = re.sub(pattern, '', main_part, flags=re.IGNORECASE)
+    
+    return main_part.strip()
 
-    Note:
-        This function removes any initial numbers, 'Chapter' prefix, and leading colon from the header.
-    """
-    def remove_initial_nums(s):
+""" def remove_initial_nums(s):
         i = 0
         while s[i].isdigit():
             i += 1
@@ -115,15 +67,77 @@ def cleanChapterHeader(header:str) -> str:
     
     #check if the next is a colon
     if s[0] == ':':
-        s = s[1:].strip()
-    
-    return s
+        s = s[1:].strip() """
 
 def prettyPrintTable(table:pd.DataFrame) -> None:
+    '''
+    Prints a formatted table with selected columns from the input DataFrame.
 
-    newtable = table[["Title", "score", "status", "Chapters","author"]].copy(deep=True)
+    Parameters:
+        table (pd.DataFrame): The input DataFrame containing the data to be displayed.
+
+    Returns:
+        None
+    '''
+    newtable = table[["Title", "score", "status", "Chapters","author", "estimatedDownload"]].copy(deep=True)
 
     # only keep main author
     newtable["author"] = newtable["author"].str.split('&').str[0]
 
+    # more readable format
+    newtable['estimatedDownload'] = newtable['estimatedDownload'].round().apply(pd.to_timedelta, unit='s')
+
+    #rename columns
+    newtable = newtable.rename(columns={"author": "Author", "estimatedDownload": "Download time (seconds)", "score": "Score", "status":"Status"})
+
     print(tabulate(newtable, headers='keys', tablefmt='psql'))
+
+def normalize_text(text:str) -> str:
+    '''
+    Normalize the input text by removing non-ASCII characters and converting it to lowercase.
+
+    Args:
+        text (str): The text to be normalized.
+
+    Returns:
+        str: The normalized text.
+    '''
+    # Remove non-ASCII characters and convert to lowercase
+    return ''.join(char for char in unicodedata.normalize('NFKD', text)
+                   if unicodedata.category(char) != 'Mn').lower()
+
+def is_advertisement(text:str) -> bool:
+    """
+    Check if the given text contains any advertisement patterns.
+    
+    Args:
+        text (str): The text to check for advertisement patterns.
+    
+    Returns:
+        bool: True if any advertisement pattern is found, False otherwise.
+    """
+    normalized_text = normalize_text(text)
+    
+    # More specific patterns to match
+    patterns = [
+        r'\bfreewebnovel\b',
+        r'visit.*for.*novel.*experience',
+        r'read.*chapters.*at',
+        r'content.*taken.*from',
+        r'source.*of.*this.*content',
+        r'updated.*from',
+        r'chapter.*updated.*by',
+        r'chapters.*published.*on',
+        r'novels.*published.*on',
+        r'follow.*current.*novels',
+        r'for.*the.*best.*novel.*reading',
+        r'most.*uptodate.*novels',
+        r'latest.*chapters.*at',
+        r'new.*novel.*chapters',
+        r'free.*web.*novel',
+        r'ew.*bn.*vel', 
+    ]
+
+    
+    # Check if any pattern matches
+    return any(re.search(pattern, normalized_text) for pattern in patterns)
