@@ -40,13 +40,7 @@ def searchWebsites(website_instances:list[Website],search:str) -> pd.DataFrame:
         search (str): The search term to look for
 
     Returns:
-        pd.DataFrame: A DataFrame containing search results with columns:\n
-            - "Title": Title of the hit
-            - "Score": Relevance score
-            - "Chapters": Number of chapters
-            - "Website": Name of the website
-            - "ChapterUrl": URL of the chapter
-            - "instance": Website instance
+        pd.DataFrame
     """
     results = []
     for website in website_instances:
@@ -55,12 +49,16 @@ def searchWebsites(website_instances:list[Website],search:str) -> pd.DataFrame:
             hit.append(website)
             results.append(hit)
     
+
     df = pd.DataFrame(
-        results, columns=["Title", "Score", "Chapters", "Website", "ChapterUrl", "instance"] 
+        results, columns=["Title", "score", "Chapters", "Website", "ChapterUrl", "abstract", 
+                          "author", "genre", "source", "original_language", "status","alternate_names", 
+                          "imglink", "estimatedDownload", "instance"] 
         )
    
 
     df["Chapters"] = df["Chapters"].astype('int32')
-    df["Score"] = df["Score"].astype('float32')
+    df["score"] = df["score"].astype('float32')
+
     df.index += 1
     return df
