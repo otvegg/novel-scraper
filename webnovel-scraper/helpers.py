@@ -3,7 +3,8 @@ from tabulate import tabulate
 import re
 import unicodedata
 
-def select_novel(df: pd.DataFrame)-> pd.Series:
+
+def select_novel(df: pd.DataFrame) -> pd.Series:
     """Prompts the user to select a novel from a DataFrame by entering a corresponding number
 
     Args:
@@ -34,43 +35,27 @@ def select_novel(df: pd.DataFrame)-> pd.Series:
     print("Selected:", novel_info.Title, "with rating", novel_info.score)
     return novel_info
 
-def cleanChapterHeader(header1:str,header2:str) -> str:
 
-    
+def cleanChapterHeader(header1: str, header2: str) -> str:
+
     # Use the longer part (assuming it's more likely to contain the full title)
-    main_part = max([header1,header2], key=len).strip()
+    main_part = max([header1, header2], key=len).strip()
 
     patterns = [
-        r'^Chapter\s+[-]?\d+:?\s*-?\s*',  # Matches "Chapter 13:", "Chapter -2:", etc.
-        r'^Chapter\s+[-]?\d+\s+',         # Matches "Chapter 13 ", "Chapter -2 ", etc.
-        r'^\d+:?\s*',                     # Matches "1:", "13 ", etc.
-        r'^Chapter\s+',                   # Matches "Chapter " at the beginning
+        r"^Chapter\s+[-]?\d+:?\s*-?\s*",  # Matches "Chapter 13:", "Chapter -2:", etc.
+        r"^Chapter\s+[-]?\d+\s+",  # Matches "Chapter 13 ", "Chapter -2 ", etc.
+        r"^\d+:?\s*",  # Matches "1:", "13 ", etc.
+        r"^Chapter\s+",  # Matches "Chapter " at the beginning
     ]
 
     for pattern in patterns:
-        main_part = re.sub(pattern, '', main_part, flags=re.IGNORECASE)
-    
+        main_part = re.sub(pattern, "", main_part, flags=re.IGNORECASE)
+
     return main_part.strip()
 
-""" def remove_initial_nums(s):
-        i = 0
-        while s[i].isdigit():
-            i += 1
-        return i
 
-    s = header
-    if header.lower().startswith("chapter"):
-        s = header[7:].strip()
-    
-    chap_digits = remove_initial_nums(s)
-    s = s[chap_digits:].strip()
-    
-    #check if the next is a colon
-    if s[0] == ':':
-        s = s[1:].strip() """
-
-def prettyPrintTable(table:pd.DataFrame) -> None:
-    '''
+def prettyPrintTable(table: pd.DataFrame) -> None:
+    """
     Prints a formatted table with selected columns from the input DataFrame.
 
     Parameters:
@@ -78,22 +63,34 @@ def prettyPrintTable(table:pd.DataFrame) -> None:
 
     Returns:
         None
-    '''
-    newtable = table[["Title", "score", "status", "Chapters","author", "estimatedDownload"]].copy(deep=True)
+    """
+    newtable = table[
+        ["Title", "score", "status", "Chapters", "author", "estimatedDownload"]
+    ].copy(deep=True)
 
     # only keep main author
-    newtable["author"] = newtable["author"].str.split('&').str[0]
+    newtable["author"] = newtable["author"].str.split("&").str[0]
 
     # more readable format
-    newtable['estimatedDownload'] = newtable['estimatedDownload'].round().apply(pd.to_timedelta, unit='s')
+    newtable["estimatedDownload"] = (
+        newtable["estimatedDownload"].round().apply(pd.to_timedelta, unit="s")
+    )
 
-    #rename columns
-    newtable = newtable.rename(columns={"author": "Author", "estimatedDownload": "Download time (seconds)", "score": "Score", "status":"Status"})
+    # rename columns
+    newtable = newtable.rename(
+        columns={
+            "author": "Author",
+            "estimatedDownload": "Download time (seconds)",
+            "score": "Score",
+            "status": "Status",
+        }
+    )
 
-    print(tabulate(newtable, headers='keys', tablefmt='psql'))
+    print(tabulate(newtable, headers="keys", tablefmt="psql"))
 
-def normalize_text(text:str) -> str:
-    '''
+
+def normalize_text(text: str) -> str:
+    """
     Normalize the input text by removing non-ASCII characters and converting it to lowercase.
 
     Args:
@@ -101,43 +98,64 @@ def normalize_text(text:str) -> str:
 
     Returns:
         str: The normalized text.
-    '''
+    """
     # Remove non-ASCII characters and convert to lowercase
-    return ''.join(char for char in unicodedata.normalize('NFKD', text)
-                   if unicodedata.category(char) != 'Mn').lower()
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", text)
+        if unicodedata.category(char) != "Mn"
+    ).lower()
 
-def is_advertisement(text:str) -> bool:
+
+def remove_advertisement(text: str) -> str:
+    normalized = normalize_text(text)
+
+    # Pattern to match freewebnovel(.com) with possible obfuscation
+    pattern = (
+        r"f\W*r?\W*e\W*e?\W*w\W*e?\W*b?\W*n\W*o?\W*v?\W*e\W*l(\W*\.?\W*c\W*o\W*m)?"
+    )
+    # Find all sentences containing the pattern
+    sentences = re.split(r'(?<=[.!?"])\s+', normalized)
+    cleaned_sentences = []
+
+    for sentence in sentences:
+        if not re.search(pattern, normalize_text(sentence), re.IGNORECASE):
+            cleaned_sentences.append(sentence)
+
+    return " ".join(cleaned_sentences).strip()
+
+
+def is_advertisement(text: str) -> bool:
     """
     Check if the given text contains any advertisement patterns.
-    
+
     Args:
         text (str): The text to check for advertisement patterns.
-    
+
     Returns:
         bool: True if any advertisement pattern is found, False otherwise.
     """
     normalized_text = normalize_text(text)
-    
+
     # More specific patterns to match
     patterns = [
-        r'\bfreewebnovel\b',
-        r'visit.*for.*novel.*experience',
-        r'read.*chapters.*at',
-        r'content.*taken.*from',
-        r'source.*of.*this.*content',
-        r'updated.*from',
-        r'chapter.*updated.*by',
-        r'chapters.*published.*on',
-        r'novels.*published.*on',
-        r'follow.*current.*novels',
-        r'for.*the.*best.*novel.*reading',
-        r'most.*uptodate.*novels',
-        r'latest.*chapters.*at',
-        r'new.*novel.*chapters',
-        r'free.*web.*novel',
-        r'ew.*bn.*vel', 
+        r"\bfreewebnovel\b",
+        r"visit.*for.*novel.*experience",
+        r"read.*chapters.*at",
+        r"content.*taken.*from",
+        r"source.*of.*this.*content",
+        r"updated.*from",
+        r"chapter.*updated.*by",
+        r"chapters.*published.*on",
+        r"novels.*published.*on",
+        r"follow.*current.*novels",
+        r"for.*the.*best.*novel.*reading",
+        r"most.*uptodate.*novels",
+        r"latest.*chapters.*at",
+        r"new.*novel.*chapters",
+        r"free.*web.*novel",
+        r"ew.*bn.*vel",
     ]
 
-    
     # Check if any pattern matches
     return any(re.search(pattern, normalized_text) for pattern in patterns)
