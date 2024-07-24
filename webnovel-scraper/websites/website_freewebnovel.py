@@ -6,29 +6,29 @@ import requests
 from .website import Website
 import helpers
 
+
 class Freewebnovel(Website):
     def __init__(self):
         super().__init__()
         self.chapterUrl = "https://freewebnovel.comenovel.com"
         self.url = "https://freewebnovel.com"
         self.searchUrl = self.url + "/search/"
-        
-        
 
     def search(self, searchkey: str):
 
-        payload = {"searchkey": searchkey} 
-        response = requests.post(self.searchUrl, data=payload, headers=self.headers)#, timeout=1)
+        payload = {"searchkey": searchkey}
+        response = requests.post(
+            self.searchUrl, data=payload, headers=self.headers
+        )  # , timeout=1)
 
         soup = BeautifulSoup(response.text, "html.parser")
         elements = soup.select(
             "body > div.main > div.wp > div.row-box > div.col-content > div > div > div > div > div.txt"
         )
-        
 
         # TODO: advance the search so we check each novels author , status, original language, alternative names
         # Probably requires an additional query for each novel
-        
+
         # TODO: Estimate download time (chapters * average scrape time)
         table = []
         for element in elements:
@@ -47,26 +47,38 @@ class Freewebnovel(Website):
             estimatedDownload = int(n_chapters) * 0.5
 
             # scrape info page
-            response = requests.get(self.url+link, headers=self.headers)
+            response = requests.get(self.url + link, headers=self.headers)
             bookSoup = BeautifulSoup(response.text, "html.parser")
-            commonElements = bookSoup.select_one("body > div.main > div > div > div.col-content > div.m-info > div.m-book1")
+            commonElements = bookSoup.select_one(
+                "body > div.main > div > div > div.col-content > div.m-info > div.m-book1"
+            )
 
             # TODO: can get more detailed score (number of votes) from this page
             abstractEls = commonElements.select("div.m-desc > div.txt > div.inner > p")
 
-            abstract = ''
+            abstract = ""
             for abstractEl in abstractEls:
-                abstract += abstractEl.get_text(strip=True) + '\n' 
+                abstract += abstractEl.get_text(strip=True) + "\n"
 
-            imgLink = commonElements.select_one("div.m-imgtxt > div.pic > img")['src']
-            imgLink = 'https://freewebnovel.com'+ imgLink
-            everythingButDesc = commonElements.select("div.m-imgtxt > div.txt > div.item")
+            imgLink = commonElements.select_one("div.m-imgtxt > div.pic > img")["src"]
+            imgLink = "https://freewebnovel.com" + imgLink
+            everythingButDesc = commonElements.select(
+                "div.m-imgtxt > div.txt > div.item"
+            )
 
-            abstract, authors,genres,source,originalLanguage,altName,status = None,None,None, None, None, None, None
+            abstract, authors, genres, source, originalLanguage, altName, status = (
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
 
             for item in everythingButDesc:
                 indicator = item.select_one("span")["title"]
-                
+
                 if indicator == "Author":
                     authors = ""
                     authorEls = item.select("div.right > a")
@@ -92,28 +104,41 @@ class Freewebnovel(Website):
                     t = item.select_one("div.right > span > span")
                     if t:
                         altName = t.get_text()
-            
+
             firstChapter = self.chapterUrl + link.replace(".html", "/chapter-1")
 
-            table.append([title, score, n_chapters, self.url, firstChapter, abstract, authors,genres,source,originalLanguage,status, altName,imgLink, estimatedDownload])
-
+            table.append(
+                [
+                    title,
+                    score,
+                    n_chapters,
+                    self.url,
+                    firstChapter,
+                    abstract,
+                    authors,
+                    genres,
+                    source,
+                    originalLanguage,
+                    status,
+                    altName,
+                    imgLink,
+                    estimatedDownload,
+                ]
+            )
 
         return table
 
-        
-
     def scrape_novel(self):
-        nChapters = self.novel['Chapters']
-        chapterUrl = self.novel['ChapterUrl']
+        nChapters = self.novel["Chapters"]
+        chapterUrl = self.novel["ChapterUrl"]
         curUrl = chapterUrl
         i = 0
 
         # TODO: implement parallell requests (remove the next chapter, and just use i instead)
         # probably a dict {chap number: contents} and then sort by chap number
 
-
         with alive_bar(total=int(nChapters)) as bar:
-            for i in range(1, nChapters+1):
+            for i in range(1, nChapters + 1):
                 response = requests.get(curUrl, headers=self.headers)
                 soup = BeautifulSoup(response.text, "html.parser")
                 next_chapter = self.chapterUrl + soup.select_one(
@@ -122,11 +147,14 @@ class Freewebnovel(Website):
 
                 # TODO: Add retrieval of chapter info
                 paragraphs = []
-                chapter_title = soup.select_one("#main1 > div > div > div.top > span").get_text()
-                
+                chapter_title = soup.select_one(
+                    "#main1 > div > div > div.top > span"
+                ).get_text()
+
                 content = soup.select("#article > p")
                 for element in content:
                     p = element.get_text(strip=True)
+                    p = helpers.remove_advertisement(p)
                     paragraphs.append(p)
 
                 # get actual header (webnovel serves 2 headers, and it varies where the "proper" header is)
@@ -134,14 +162,10 @@ class Freewebnovel(Website):
 
                 # Remove paragraph (advertisement) # HACK: This might not be final?
                 # Currently only for webnovel advertisements
-                if helpers.is_advertisement(*paragraphs[-1:]): 
-                    paragraphs.pop()
+                """ if helpers.is_advertisement(*paragraphs[-1:]):
+                    paragraphs.pop() """
 
-                
-            
                 self.chapters.append(paragraphs)
 
                 curUrl = next_chapter
                 bar()
-
-
