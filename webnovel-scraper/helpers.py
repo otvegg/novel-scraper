@@ -3,6 +3,36 @@ from tabulate import tabulate
 import re
 import unicodedata
 
+f = "fƒ"
+r = "rɾг"
+e = "eēёêèéẹ"
+w = "wω𝑤"
+b = "bɓ"
+n = "nηɳ"
+o = "oσ0ο૦ơѳøȯọỏ"
+v = "vѵν"
+l = "lɭḷℓ"
+c = "cƈċ"
+m = "mɱ๓"
+
+
+def normalize_text(text: str) -> str:
+    """
+    Normalize the input text by removing non-ASCII characters and converting it to lowercase.
+
+    Args:
+        text (str): The text to be normalized.
+
+    Returns:
+        str: The normalized text.
+    """
+    # Remove non-ASCII characters and convert to lowercase
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", text)
+        if unicodedata.category(char) != "Mn"
+    ).lower()
+
 
 def select_novel(df: pd.DataFrame) -> pd.Series:
     """Prompts the user to select a novel from a DataFrame by entering a corresponding number
@@ -37,7 +67,6 @@ def select_novel(df: pd.DataFrame) -> pd.Series:
 
 
 def cleanChapterHeader(header1: str, header2: str) -> str:
-
     # Use the longer part (assuming it's more likely to contain the full title)
     main_part = max([header1, header2], key=len).strip()
 
@@ -51,7 +80,11 @@ def cleanChapterHeader(header1: str, header2: str) -> str:
     for pattern in patterns:
         main_part = re.sub(pattern, "", main_part, flags=re.IGNORECASE)
 
-    return main_part.strip()
+    # Pattern to match freewebnovel(.com) with possible obfuscation
+    pattern = rf"[{f}]\W*[{r}]\W*[{e}]\W*[{e}]\W*[{w}]\W*[{e}]\W*[{b}]\W*[{n}]\W*[{o}]\W*[{v}]\W*[{e}]\W*[{l}](\W*[.]\W*[{c}]\W*[{o}]\W*[{m}])?"
+
+    cleaned = re.sub(pattern, "", main_part, flags=re.IGNORECASE)
+    return cleaned.strip()
 
 
 def prettyPrintTable(table: pd.DataFrame) -> None:
@@ -89,40 +122,53 @@ def prettyPrintTable(table: pd.DataFrame) -> None:
     print(tabulate(newtable, headers="keys", tablefmt="psql"))
 
 
-def normalize_text(text: str) -> str:
-    """
-    Normalize the input text by removing non-ASCII characters and converting it to lowercase.
-
-    Args:
-        text (str): The text to be normalized.
-
-    Returns:
-        str: The normalized text.
-    """
-    # Remove non-ASCII characters and convert to lowercase
-    return "".join(
-        char
-        for char in unicodedata.normalize("NFKD", text)
-        if unicodedata.category(char) != "Mn"
-    ).lower()
-
-
 def remove_advertisement(text: str) -> str:
-    normalized = normalize_text(text)
-
     # Pattern to match freewebnovel(.com) with possible obfuscation
-    pattern = (
-        r"f\W*r?\W*e\W*e?\W*w\W*e?\W*b?\W*n\W*o?\W*v?\W*e\W*l(\W*\.?\W*c\W*o\W*m)?"
-    )
-    # Find all sentences containing the pattern
-    sentences = re.split(r'(?<=[.!?"])\s+', normalized)
-    cleaned_sentences = []
+    # Look into python homoglyph libraries?
+    pattern = rf"[{f}]\W*[{r}]\W*[{e}]\W*[{e}]\W*[{w}]\W*[{e}]\W*[{b}]\W*[{n}]\W*[{o}]\W*[{v}]\W*[{e}]\W*[{l}](\W*[.]\W*[{c}]\W*[{o}]\W*[{m}])?"
 
+    patterns = [
+        pattern,
+        r"daonovel\.com",
+        r"\(\s*Boxno\s*vel\.\s*co\s*m\s*\)",
+        r"You're reading on B\s*oxnovel\.c\s*om\s*\.Tks!",
+        r"\(\s*Boxno\s*vel\.\s*co\s*m\s*\)",
+    ]
+    combined_pattern = "|".join(patterns)
+    # Find all sentences containing the pattern
+    sentence_splitter = r"(?<=[.!?])\s+"
+    sentences = re.split(sentence_splitter, text)
+
+    cleaned_sentences = []
     for sentence in sentences:
-        if not re.search(pattern, normalize_text(sentence), re.IGNORECASE):
+        if re.search(combined_pattern, sentence, re.IGNORECASE):
+            # If the ad is at the end, remove only that part
+            cleaned_sentence = re.sub(
+                rf"({combined_pattern})$", "", sentence, flags=re.IGNORECASE
+            ).strip()
+            if cleaned_sentence and cleaned_sentence != sentence:
+                cleaned_sentences.append(cleaned_sentence)
+            # If the ad is not at the end, skip the entire sentence
+        else:
             cleaned_sentences.append(sentence)
 
-    return " ".join(cleaned_sentences).strip()
+    return " ".join(cleaned_sentences)
+
+    """ cleaned_sentences = []
+    for sentence in sentences:
+        if re.search(pattern, sentence, re.IGNORECASE):
+            # If it's just freewebnovel.com at the end, remove only that part
+            if re.search(rf"{pattern}$", sentence, re.IGNORECASE):
+                cleaned_sentence = re.sub(
+                    rf"{pattern}$", "", sentence, flags=re.IGNORECASE
+                ).strip()
+                if cleaned_sentence:
+                    cleaned_sentences.append(cleaned_sentence)
+            # Otherwise, skip the entire sentence
+        else:
+            cleaned_sentences.append(sentence)
+
+    return " ".join(cleaned_sentences) """
 
 
 def is_advertisement(text: str) -> bool:

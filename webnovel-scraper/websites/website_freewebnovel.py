@@ -160,11 +160,6 @@ class Freewebnovel(Website):
                 # get actual header (webnovel serves 2 headers, and it varies where the "proper" header is)
                 paragraphs[0] = helpers.cleanChapterHeader(chapter_title, paragraphs[0])
 
-                # Remove paragraph (advertisement) # HACK: This might not be final?
-                # Currently only for webnovel advertisements
-                """ if helpers.is_advertisement(*paragraphs[-1:]):
-                    paragraphs.pop() """
-
                 self.chapters.append(paragraphs)
 
                 curUrl = next_chapter
