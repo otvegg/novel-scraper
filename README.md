@@ -1,9 +1,5 @@
 # WebNovel Webscraper
 
-## Description
-
-This project is a **webnovel webscraper** designed to scrape books from the internet, download them, and convert them into PDF or EPUB formats. This allows users to read their favorite webnovels on devices like phones or Kindles, even when offline.
-
 Currently, the scraper supports one website, but there are plans to add more in the future.
 
 ## Features
