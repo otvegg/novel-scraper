@@ -3,17 +3,20 @@ from tabulate import tabulate
 import re
 import unicodedata
 
+a = "a"
+b = "bɓ"
+c = "cƈċ"
+d = "d"
+e = "eēёêèéẹ"
 f = "fƒ"
 r = "rɾг"
-e = "eēёêèéẹ"
 w = "wω𝑤"
-b = "bɓ"
 n = "nηɳ"
 o = "oσ0ο૦ơѳøȯọỏ"
 v = "vѵν"
 l = "lɭḷℓ"
-c = "cƈċ"
 m = "mɱ๓"
+x = "x"
 
 
 def normalize_text(text: str) -> str:
@@ -125,34 +128,36 @@ def prettyPrintTable(table: pd.DataFrame) -> None:
 def remove_advertisement(text: str) -> str:
     # Pattern to match freewebnovel(.com) with possible obfuscation
     # Look into python homoglyph libraries?
-    pattern = rf"[{f}]\W*[{r}]\W*[{e}]\W*[{e}]\W*[{w}]\W*[{e}]\W*[{b}]\W*[{n}]\W*[{o}]\W*[{v}]\W*[{e}]\W*[{l}](\W*[.]\W*[{c}]\W*[{o}]\W*[{m}])?"
+    pattern_freewebnovel = rf"[{f}][\W_.]*[{r}][\W_.]*[{e}][\W_.]*[{e}][\W_.]*[{w}][\W_.]*[{e}][\W_.]*[{b}][\W_.]*[{n}][\W_.]*[{o}][\W_.]*[{v}][\W_.]*[{e}][\W_.]*[{l}]([\W_.]*[{c}][\W_.]*[{o}][\W_.]*[{m}])?"
+    pattern_daonovel = rf"[{d}][\W_.]*[{a}][\W_.]*[{o}][\W_.]*[{n}][\W_.]*[{o}][\W_.]*[{v}][\W_.]*[{e}][\W_.]*[{l}]([\W_.]*[{c}][\W_.]*[{o}][\W_.]*[{m}])?"
+    pattern_boxnovel = rf"[{b}][\W_.]*[{o}][\W_.]*[{x}][\W_.]*[{n}][\W_.]*[{o}][\W_.]*[{v}][\W_.]*[{e}][\W_.]*[{l}]([\W_.]*[{c}][\W_.]*[{o}][\W_.]*[{m}])?"
 
-    patterns = [
-        pattern,
-        r"daonovel\.com",
-        r"\(\s*Boxno\s*vel\.\s*co\s*m\s*\)",
-        r"You're reading on B\s*oxnovel\.c\s*om\s*\.Tks!",
-        r"\(\s*Boxno\s*vel\.\s*co\s*m\s*\)",
-    ]
+    patterns = [pattern_freewebnovel, pattern_daonovel, pattern_boxnovel]
     combined_pattern = "|".join(patterns)
-    # Find all sentences containing the pattern
-    sentence_splitter = r"(?<=[.!?])\s+"
-    sentences = re.split(sentence_splitter, text)
 
-    cleaned_sentences = []
-    for sentence in sentences:
-        if re.search(combined_pattern, sentence, re.IGNORECASE):
-            # If the ad is at the end, remove only that part
-            cleaned_sentence = re.sub(
-                rf"({combined_pattern})$", "", sentence, flags=re.IGNORECASE
-            ).strip()
-            if cleaned_sentence and cleaned_sentence != sentence:
-                cleaned_sentences.append(cleaned_sentence)
-            # If the ad is not at the end, skip the entire sentence
-        else:
-            cleaned_sentences.append(sentence)
+    # Remove parentheses surrounding advertisements
+    text = re.sub(rf"\(\s*({combined_pattern})[\s.]*\)", "", text, flags=re.IGNORECASE)
 
-    return " ".join(cleaned_sentences)
+    # Remove "read only at" and similar phrases, including everything after
+    read_patterns = [
+        r"read\s+(?:more|only)\s+(?:on|at)",
+        r"search.*on\s+google",
+        r"you['']re\s+reading\s+on",
+        r"tks!",
+        r"You’re reading",
+    ]
+    read_combined = "|".join(read_patterns)
+
+    # Combine all patterns
+    full_pattern = rf"({combined_pattern}|{read_combined}).*$"
+
+    # Remove advertisements and related phrases from the entire text
+    cleaned_text = re.sub(full_pattern, "", text, flags=re.IGNORECASE | re.DOTALL)
+
+    # Remove any trailing whitespace or punctuation
+    # cleaned_text = re.sub(r'[.!?]\s*$', '', cleaned_text.strip())
+
+    return cleaned_text
 
     """ cleaned_sentences = []
     for sentence in sentences:

@@ -146,7 +146,7 @@ class Website:
             chapter_link = epub.Link(f"chapter-{i+1}.xhtml", f"{chapter[0]}", f"chapter-{i+1}")
             toc.append(chapter_link)
 
-            chapter_header = f"<h1 style='font-size: 24px;'>{chapter[0]}</h1>"
+            chapter_header = f"<h1 style='font-size: 24px;'>{i+1} - {chapter[0]}</h1>"
             chapter_content = ''.join([f"<p>{paragraph}</p>" for paragraph in chapter[1:]])
             echapter.set_content(f"{chapter_header}{chapter_content}")
         
