@@ -41,10 +41,11 @@ class Freewebnovel(Website):
             bookSoup = BeautifulSoup(response.text, "html.parser")
 
             chapters = bookSoup.select("#idData > li > a")
-            print(link)
             chapterLinks = []
             for i in chapters:
-                chapterLinks.append(self.chapterUrl + i.get("href"))
+                chapterLinks.append(
+                    self.chapterUrl + i.get("href").replace(".html", "")
+                )
 
             estimatedDownload = len(chapterLinks) * 0.5
 
