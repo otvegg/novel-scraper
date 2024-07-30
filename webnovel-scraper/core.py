@@ -65,7 +65,6 @@ def searchWebsites(
             "score",
             "Chapters",
             "Website",
-            "ChapterUrl",
             "abstract",
             "author",
             "genre",
@@ -79,7 +78,7 @@ def searchWebsites(
         ],
     )
 
-    df["Chapters"] = df["Chapters"].astype("int32")
+    # df["Chapters"] = df["Chapters"].astype("int32")
     df["score"] = df["score"].astype("float32")
 
     df.index += 1

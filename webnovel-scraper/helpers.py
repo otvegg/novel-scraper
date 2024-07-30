@@ -106,7 +106,7 @@ def prettyPrintTable(table: pd.DataFrame) -> None:
 
     # only keep main author
     newtable["author"] = newtable["author"].str.split("&").str[0]
-
+    newtable["Chapters"] = newtable["Chapters"].apply(len)
     # more readable format
     newtable["estimatedDownload"] = (
         newtable["estimatedDownload"].round().apply(pd.to_timedelta, unit="s")
