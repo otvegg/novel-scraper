@@ -136,8 +136,6 @@ class Freewebnovel(Website):
         nChapters = len(self.novel["Chapters"])
         chapterUrls = self.novel["Chapters"]
 
-        print(f"Scraping {chapterUrls[0]}")
-
         def extract_chapter_content(soup, index):
             paragraphs = []
 
@@ -174,22 +172,25 @@ class Freewebnovel(Website):
         session = FuturesSession(max_workers=self.BATCH_SIZE)
         futures = []
 
-        # Create futures for all requests
-        for index, chapterUrl in enumerate(chapterUrls):
-            logging.info(f"Creating future for chapter {index} from {chapterUrl}")
-            future = session.get(chapterUrl, headers=self.headers)
-            futures.append((index, future))
-            if index % self.BATCH_SIZE == 0 and index != 0:
-                print("Waiting initiated.")
-                time.sleep(15)
-                print("Finished waiting...")
+        rate_limit = 3  # 3 seems to work
+        interval = 1 / rate_limit
+        print(interval)
 
-            # Process completed futures
+        # Create futures for all requests
+        with alive_bar(total=int(nChapters)) as bar:
+            for index, chapterUrl in enumerate(chapterUrls):
+                # logging.info(f"Creating future for chapter {index} from {chapterUrl}")
+                future = session.get(chapterUrl, headers=self.headers)
+                futures.append((index, future))
+                time.sleep(interval)
+                bar()
+
+        # Process completed futures
         with alive_bar(total=int(nChapters)) as bar:
             for index, future in futures:
                 try:
                     response = future.result()
-                    logging.info(f"Received response for chapter {index}")
+                    # logging.info(f"Received response for chapter {index}")
 
                     soup = BeautifulSoup(response.text, "html.parser")
                     chapter_content = extract_chapter_content(soup, index)
