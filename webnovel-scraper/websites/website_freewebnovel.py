@@ -5,6 +5,13 @@ import pandas as pd
 import requests
 from .website import Website
 import helpers
+from requests_futures.sessions import FuturesSession
+import logging
+import time
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class Freewebnovel(Website):
@@ -13,6 +20,8 @@ class Freewebnovel(Website):
         self.chapterUrl = "https://freewebnovel.comenovel.com"
         self.url = "https://freewebnovel.com"
         self.searchUrl = self.url + "/search/"
+        self.BATCH_SIZE = 25
+        self.WAIT_TIME = 10
 
     def search(self, searchkey: str):
 
@@ -129,13 +138,29 @@ class Freewebnovel(Website):
 
         print(f"Scraping {chapterUrls[0]}")
 
-        def extract_chapter_content(soup):
+        def extract_chapter_content(soup, index):
             paragraphs = []
-            chapter_title = soup.select_one(
-                "#main1 > div > div > div.top > span"
-            ).get_text()
+
+            # Check if the soup object is valid
+            if not soup or not isinstance(soup, BeautifulSoup):
+                logging.error(f"Invalid soup object for chapter {index}")
+                return None
+
+            # Try to get the chapter title
+            title_element = soup.select_one("#main1 > div > div > div.top > span")
+            if title_element is None:
+                logging.error(f"Could not find chapter title for chapter {index}")
+                # Log the first 500 characters of the HTML to see what we're dealing with
+                logging.debug(f"HTML snippet: {soup.prettify()[:500]}")
+                return None
+
+            chapter_title = title_element.get_text()
 
             content = soup.select("#article > p")
+            if not content:
+                logging.error(f"Could not find chapter content for chapter {index}")
+                return None
+
             for element in content:
                 p = element.get_text(strip=True)
                 p = helpers.remove_advertisement(p)
@@ -146,25 +171,41 @@ class Freewebnovel(Website):
 
             return paragraphs
 
-        # TODO: implement parallell requests (remove the next chapter, and just use i instead)
-        # probably a dict {chap number: contents} and then sort by chap number
+        session = FuturesSession(max_workers=self.BATCH_SIZE)
+        futures = []
 
+        # Create futures for all requests
+        for index, chapterUrl in enumerate(chapterUrls):
+            logging.info(f"Creating future for chapter {index} from {chapterUrl}")
+            future = session.get(chapterUrl, headers=self.headers)
+            futures.append((index, future))
+            if index % self.BATCH_SIZE == 0 and index != 0:
+                print("Waiting initiated.")
+                time.sleep(15)
+                print("Finished waiting...")
+
+            # Process completed futures
         with alive_bar(total=int(nChapters)) as bar:
-            for index, chapterUrl in enumerate(chapterUrls):
-                soup = None
+            for index, future in futures:
                 try:
-                    response = requests.get(chapterUrl, headers=self.headers)
+                    response = future.result()
+                    logging.info(f"Received response for chapter {index}")
+
                     soup = BeautifulSoup(response.text, "html.parser")
-                    CHAPTER_LINK_SELECTOR = (
-                        "#main1 > div > div > div.ul-list7 > ul > li:nth-child(4) > a"
-                    )
-                    next_chapter = self.chapterUrl + soup.select_one(
-                        CHAPTER_LINK_SELECTOR
-                    ).get("href")
+                    chapter_content = extract_chapter_content(soup, index)
+                    if chapter_content is not None:
+                        self.chapters.append((index, chapter_content))
+                    else:
+                        logging.warning(
+                            f"Skipping chapter {index} due to extraction failure.\nStatus code: {response.status_code}"
+                            # f"\nHeaders:{response.headers}"
+                        )
                 except requests.exceptions.RequestException as e:
-                    # TODO Handle this error
-                    print(f"Error in HTTP request: {e}")
-                if soup:
-                    self.chapters.append(extract_chapter_content(soup))
+                    logging.error(f"Error in HTTP request for chapter {index}: {e}")
+                except Exception as e:
+                    logging.error(f"Unexpected error processing chapter {index}: {e}")
 
                 bar()
+
+        self.chapters = sorted(self.chapters)
+        self.chapters = [sublist[1:] for sublist in self.chapters]
