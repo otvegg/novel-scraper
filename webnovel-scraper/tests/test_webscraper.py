@@ -1,16 +1,48 @@
+import logging
 import unittest
 from unittest.mock import patch
-import core
+import os, sys
+from io import StringIO
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import core, helpers
+from websites.website import Website
 
 
-class TestNovelSearch(unittest.TestCase):
-    @patch("builtins.input", return_value="Alice")
-    def test_greet_user(self, mock_input):
-        with patch("builtins.print") as mock_print:
-            websites = core.initiateClasses()
-            core.searchWebsites(websites, searchkey)
-            mock_print.assert_called_with("Hello, Alice!")
+logging.basicConfig(level=logging.INFO)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_divine_talisman(monkeypatch):
+    # Mock the input() function to return "1"
+    monkeypatch.setattr("builtins.input", lambda _: "1")
+
+    # Capture the output of the print() function
+    captured_output = StringIO()
+    monkeypatch.setattr(sys, "stdout", captured_output)
+
+    # Call the functions
+    websites = core.initiateClasses()
+    novels = core.searchWebsites(websites, "divine talisman")
+    novel = helpers.select_novel(novels)
+
+    # Check the captured output
+    captured_output.seek(0)
+    output = captured_output.read().strip()
+    assert output == "Selected: Divine Talisman Grandmaster with rating 4.0"
+
+    website: Website = novel.instance
+    website.setFormat()
+    monkeypatch.setattr("builtins.input", lambda _: "epub")
+
+    website: Website = novel.instance
+    website.setFormat()
+
+    # Capture the output again if needed
+    captured_output.seek(0)
+    output = captured_output.read().strip()
+    # Add assertions for the expected output after setting the format
+    assert "Expected output after setting format" in output
+
+    website.setNovel(novel)
+    # website.scrape_novel()
+    # website.saveFile()
