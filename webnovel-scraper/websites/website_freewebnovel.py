@@ -9,10 +9,6 @@ from requests_futures.sessions import FuturesSession
 import logging
 import time
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 
 class Freewebnovel(Website):
     def __init__(self):
@@ -22,6 +18,7 @@ class Freewebnovel(Website):
         self.searchUrl = self.url + "/search/"
         self.BATCH_SIZE = 25
         self.WAIT_TIME = 10
+        self.RATELIMIT = 3
 
     def search(self, searchkey: str):
 
@@ -132,74 +129,69 @@ class Freewebnovel(Website):
 
         return table
 
+    def extract_chapter_content(self, soup, index):
+        paragraphs = []
+
+        # Check if the soup object is valid
+        if not soup or not isinstance(soup, BeautifulSoup):
+            logging.error(f"Invalid soup object for chapter {index}")
+            return None
+
+        # Try to get the chapter title
+        title_element = soup.select_one("#main1 > div > div > div.top > span")
+        if title_element is None:
+            logging.error(f"Could not find chapter title for chapter {index}")
+            # Log the first 500 characters of the HTML to see what we're dealing with
+            logging.debug(f"HTML snippet: {soup.prettify()[:500]}")
+            return None
+
+        chapter_title = title_element.get_text()
+
+        content = soup.select("#article > p")
+        if not content:
+            logging.error(f"Could not find chapter content for chapter {index}")
+            return None
+
+        for element in content:
+            p = element.get_text(strip=True)
+            p = helpers.remove_advertisement(p)
+            paragraphs.append(p)
+
+        # get actual header (webnovel serves 2 headers, and it varies where the "proper" header is)
+        paragraphs[0] = helpers.cleanChapterHeader(chapter_title, paragraphs[0])
+
+        return paragraphs
+
     def scrape_novel(self):
         nChapters = len(self.novel["Chapters"])
         chapterUrls = self.novel["Chapters"]
 
-        def extract_chapter_content(soup, index):
-            paragraphs = []
-
-            # Check if the soup object is valid
-            if not soup or not isinstance(soup, BeautifulSoup):
-                logging.error(f"Invalid soup object for chapter {index}")
-                return None
-
-            # Try to get the chapter title
-            title_element = soup.select_one("#main1 > div > div > div.top > span")
-            if title_element is None:
-                logging.error(f"Could not find chapter title for chapter {index}")
-                # Log the first 500 characters of the HTML to see what we're dealing with
-                logging.debug(f"HTML snippet: {soup.prettify()[:500]}")
-                return None
-
-            chapter_title = title_element.get_text()
-
-            content = soup.select("#article > p")
-            if not content:
-                logging.error(f"Could not find chapter content for chapter {index}")
-                return None
-
-            for element in content:
-                p = element.get_text(strip=True)
-                p = helpers.remove_advertisement(p)
-                paragraphs.append(p)
-
-            # get actual header (webnovel serves 2 headers, and it varies where the "proper" header is)
-            paragraphs[0] = helpers.cleanChapterHeader(chapter_title, paragraphs[0])
-
-            return paragraphs
-
         session = FuturesSession(max_workers=self.BATCH_SIZE)
         futures = []
 
-        rate_limit = 3  # 3 seems to work
-        interval = 1 / rate_limit
-        print(interval)
+        interval = 1 / self.RATELIMIT
 
         # Create futures for all requests
-        with alive_bar(total=int(nChapters)) as bar:
-            for index, chapterUrl in enumerate(chapterUrls):
-                # logging.info(f"Creating future for chapter {index} from {chapterUrl}")
-                future = session.get(chapterUrl, headers=self.headers)
-                futures.append((index, future))
-                time.sleep(interval)
-                bar()
+        for index, chapterUrl in enumerate(chapterUrls):
+            logging.info(f"Creating future for chapter {index} from {chapterUrl}")
+            future = session.get(chapterUrl, headers=self.headers)
+            futures.append((index, future))
+            time.sleep(interval)
 
         # Process completed futures
         with alive_bar(total=int(nChapters)) as bar:
             for index, future in futures:
                 try:
                     response = future.result()
-                    # logging.info(f"Received response for chapter {index}")
+                    logging.info(f"Received response for chapter {index}")
 
                     soup = BeautifulSoup(response.text, "html.parser")
-                    chapter_content = extract_chapter_content(soup, index)
+                    chapter_content = self.extract_chapter_content(soup, index)
                     if chapter_content is not None:
                         self.chapters.append((index, chapter_content))
                     else:
                         logging.warning(
                             f"Skipping chapter {index} due to extraction failure.\nStatus code: {response.status_code}"
-                            # f"\nHeaders:{response.headers}"
                         )
                 except requests.exceptions.RequestException as e:
                     logging.error(f"Error in HTTP request for chapter {index}: {e}")
@@ -209,4 +201,4 @@ class Freewebnovel(Website):
                 bar()
 
         self.chapters = sorted(self.chapters)
-        self.chapters = [sublist[1:] for sublist in self.chapters]
+        self.chapters = [list(sublist)[1:][0] for sublist in self.chapters]
