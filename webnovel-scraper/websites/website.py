@@ -46,7 +46,18 @@ class Website:
             else:
                 self.format = format
     
+
     def setNovel(self, novel:pd.Series):
+        """
+        Set the novel data for the Website instance.
+
+        Parameters:
+        novel (pd.Series): A pandas Series containing novel data.
+
+        Returns:
+        None
+        """
+
         self.novel = novel
 
 
