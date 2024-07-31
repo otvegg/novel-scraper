@@ -22,23 +22,28 @@ logging.basicConfig(
 logging.info("Logging now setup.")
 
 
-def main():
-    start = timeit.default_timer()
+def main() -> None:
+    logging.info("Logging setup at the beginning of the main function.")
 
-    # TODO: Optionally make a selection of what websites to search
     websites = core.initiateClasses()
-    while True:
-        searchkey = input("Search for a novel (q to exit): ")
-        novels = core.searchWebsites(websites, searchkey)
+    searchkey = ""
+    while searchkey.lower() != "q":
+        try:
+            searchkey = input("Search for a novel (q to exit): ")
 
-        if novels is not None and not novels.empty:
-            break
+            novels = core.searchWebsites(websites, searchkey)
+            if novels is not None and not novels.empty:
+                break
 
-        if novels == None and searchkey.lower() != "q":
-            print("No novel found, please adjust query.")
-        if searchkey.lower() == "q":
-            print("Exiting...")
-            return
+            if novels is None:
+                print("No novel found, please adjust query.")
+
+        except Exception as e:
+            print("An error occurred during novel search:", e)
+
+    if searchkey.lower() == "q":
+        print("Exiting...")
+        return
 
     helpers.prettyPrintTable(novels)
 
@@ -46,13 +51,12 @@ def main():
 
     website: Website = novel.instance
     website.setFormat()
+    start = timeit.default_timer()
     website.setNovel(novel)
     website.scrape_novel()
     website.saveFile()
 
-    stop = timeit.default_timer()
-
-    print("Time: ", stop - start)
+    print("Scraping+saving runtime:", timeit.default_timer() - start)
 
 
 if __name__ == "__main__":

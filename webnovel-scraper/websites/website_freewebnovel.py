@@ -1,4 +1,5 @@
 import timeit
+from typing import List, Optional
 from alive_progress import alive_bar
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -129,8 +130,13 @@ class Freewebnovel(Website):
 
         return table
 
-    def extract_chapter_content(self, soup, index):
+    def extract_chapter_content(
+        self, soup: BeautifulSoup, index: int
+    ) -> Optional[List[str]]:
         paragraphs = []
+
+        TITLE_SELECTOR = "#main1 > div > div > div.top > span"
+        CONTENT_SELECTOR = "#article > p"
 
         # Check if the soup object is valid
         if not soup or not isinstance(soup, BeautifulSoup):
@@ -138,27 +144,26 @@ class Freewebnovel(Website):
             return None
 
         # Try to get the chapter title
-        title_element = soup.select_one("#main1 > div > div > div.top > span")
+        title_element = soup.select_one(TITLE_SELECTOR)
         if title_element is None:
             logging.error(f"Could not find chapter title for chapter {index}")
-            # Log the first 500 characters of the HTML to see what we're dealing with
-            logging.debug(f"HTML snippet: {soup.prettify()[:500]}")
             return None
 
         chapter_title = title_element.get_text()
 
-        content = soup.select("#article > p")
+        content = soup.select(CONTENT_SELECTOR)
         if not content:
             logging.error(f"Could not find chapter content for chapter {index}")
             return None
 
-        for element in content:
-            p = element.get_text(strip=True)
-            p = helpers.remove_advertisement(p)
-            paragraphs.append(p)
+        paragraphs = [
+            helpers.remove_advertisement(element.get_text(strip=True))
+            for element in content
+        ]
 
         # get actual header (webnovel serves 2 headers, and it varies where the "proper" header is)
-        paragraphs[0] = helpers.cleanChapterHeader(chapter_title, paragraphs[0])
+        if paragraphs:
+            paragraphs[0] = helpers.cleanChapterHeader(chapter_title, paragraphs[0])
 
         return paragraphs
 
@@ -179,6 +184,7 @@ class Freewebnovel(Website):
             time.sleep(interval)
 
         # Process completed futures
+        # TODO: Add something for errors, like retry
         with alive_bar(total=int(nChapters)) as bar:
             for index, future in futures:
                 try:
@@ -200,5 +206,7 @@ class Freewebnovel(Website):
 
                 bar()
 
-        self.chapters = sorted(self.chapters)
+        # self.chapters = sorted(self.chapters)
+        self.chapters.sort()  # make sure order is correct
+        # remove index and extract chapter from tuple
         self.chapters = [list(sublist)[1:][0] for sublist in self.chapters]
