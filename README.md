@@ -30,17 +30,19 @@ This section tracks the progress of adding support for different websites. The s
 | Website             | Status                                                   |
 | ------------------- | -------------------------------------------------------- |
 | freewebnovel.com    | ![#4fe10f](https://placehold.co/15x15/lime/lime.png)     |
-| wuxiaworld.site     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| readnovelfull.com   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| novelfull.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| novelfull.me        | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| readlightnovel.meme | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| wuxiaspot.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| novelfull.net       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| wuxiabox.com        | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| ranobes.top         | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| royalroad.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-| lightnovelpub.com   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+
+| https://www.gutenberg.org/    | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| wuxiaworld.site     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| readnovelfull.com   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| novelfull.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| novelfull.me        | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| readlightnovel.meme | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| wuxiaspot.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| novelfull.net       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| wuxiabox.com        | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| ranobes.top         | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| royalroad.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment]:| lightnovelpub.com   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 
 <!-- Ltnovel.com just links to wuxiaspot-->
 
