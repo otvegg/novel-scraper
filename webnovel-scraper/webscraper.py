@@ -26,28 +26,32 @@ def main() -> None:
     logging.info("Logging setup at the beginning of the main function.")
 
     websites = core.initiateClasses()
+
     searchkey = ""
+    novels = None
     while searchkey.lower() != "q":
         try:
             searchkey = input("Search for a novel (q to exit): ")
 
+            if searchkey.lower() == "q":
+                print("Exiting...")
+                return
             novels = core.searchWebsites(websites, searchkey)
+
             if novels is not None and not novels.empty:
                 break
-
+            print(f"Searching for novel: {searchkey}")
             if novels is None:
                 print("No novel found, please adjust query.")
 
         except Exception as e:
+
             print("An error occurred during novel search:", e)
 
-    if searchkey.lower() == "q":
-        print("Exiting...")
-        return
-
-    helpers.prettyPrintTable(novels)
-
     novel = helpers.select_novel(novels)
+
+    if isinstance(novel, int) and novel == -1:
+        return
 
     website: Website = novel.instance
     website.setFormat()

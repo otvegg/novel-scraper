@@ -2,6 +2,7 @@ import pandas as pd
 from tabulate import tabulate
 import re
 import unicodedata
+import os
 
 a = "a"
 b = "bɓ"
@@ -37,7 +38,7 @@ def normalize_text(text: str) -> str:
     ).lower()
 
 
-def select_novel(df: pd.DataFrame) -> pd.Series:
+def select_novel(df: pd.DataFrame) -> pd.Series | int:
     """Prompts the user to select a novel from a DataFrame by entering a corresponding number
 
     Args:
@@ -51,16 +52,47 @@ def select_novel(df: pd.DataFrame) -> pd.Series:
     min_value = df.index.min()
     max_value = df.index.max()
 
+    display_n_novels = os.get_terminal_size().lines - 5
+
     # Ask for value from user
     selected_novel = -1
+    iteration = 0
+    answer = ""
+    b = 0
+
     while selected_novel > max_value or selected_novel < min_value:
-        selected_novel = int(
-            input("Enter the number corresponding to the novel you want to read: ")
+
+        if b == max_value:
+            iteration = 0
+
+        b = iteration + display_n_novels
+        if b > max_value:
+            b = max_value
+
+        os.system("cls")
+        prettyPrintTable(df[iteration:b])
+
+        answer = input(
+            "Enter the number corresponding to the novel you want to read (q to exit | enter for more options): "
         )
-        if selected_novel > max_value or selected_novel < min_value:
+
+        if answer == "":
+            iteration += display_n_novels
+            continue
+
+        if answer.isdigit():
+            selected_novel = int(answer)
+            if selected_novel > max_value or selected_novel < min_value:
+                print(
+                    "Incorrect value, please choose a value fitting corresponding to a novel."
+                )
+                input("Press any button to continue...")
+        elif answer != "q":
             print(
                 "Incorrect value, please choose a value fitting corresponding to a novel."
             )
+        elif answer == "q":
+            return -1
 
     # Retrieve selected novel
     novel_info = df.loc[selected_novel]
@@ -101,7 +133,16 @@ def prettyPrintTable(table: pd.DataFrame) -> None:
         None
     """
     newtable = table[
-        ["Title", "score", "status", "Chapters", "author", "estimatedDownload"]
+        [
+            "Title",
+            "score",
+            "status",
+            "Chapters",
+            "author",
+            "estimatedDownload",
+            "source",
+            "Website",
+        ]
     ].copy(deep=True)
 
     # only keep main author
@@ -116,11 +157,36 @@ def prettyPrintTable(table: pd.DataFrame) -> None:
     newtable = newtable.rename(
         columns={
             "author": "Author",
-            "estimatedDownload": "Download time (seconds)",
+            "estimatedDownload": "DL time",
             "score": "Score",
             "status": "Status",
+            "source": "Source",
         }
     )
+
+    def truncate(x, cutoff_value):
+        return (
+            x[:cutoff_value] + "..."
+            if isinstance(x, str) and len(x) > cutoff_value
+            else x
+        )
+
+    def format_timedelta(td):
+        total_seconds = int(td.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        if hours > 0:
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        else:
+            return f"{minutes:02}:{seconds:02}"
+
+    newtable["DL time"] = newtable["DL time"].apply(format_timedelta)
+
+    newtable["Title"] = newtable["Title"].apply(lambda x: truncate(x, 30))
+    newtable["Author"] = newtable["Author"].apply(lambda x: truncate(x, 15))
+
+    # newtable = newtable.applymap(truncate)
+    newtable["Website"] = newtable["Website"].apply(lambda x: x.replace("https://", ""))
 
     print(tabulate(newtable, headers="keys", tablefmt="psql"))
 
@@ -158,22 +224,6 @@ def remove_advertisement(text: str) -> str:
     # cleaned_text = re.sub(r'[.!?]\s*$', '', cleaned_text.strip())
 
     return cleaned_text
-
-    """ cleaned_sentences = []
-    for sentence in sentences:
-        if re.search(pattern, sentence, re.IGNORECASE):
-            # If it's just freewebnovel.com at the end, remove only that part
-            if re.search(rf"{pattern}$", sentence, re.IGNORECASE):
-                cleaned_sentence = re.sub(
-                    rf"{pattern}$", "", sentence, flags=re.IGNORECASE
-                ).strip()
-                if cleaned_sentence:
-                    cleaned_sentences.append(cleaned_sentence)
-            # Otherwise, skip the entire sentence
-        else:
-            cleaned_sentences.append(sentence)
-
-    return " ".join(cleaned_sentences) """
 
 
 def is_advertisement(text: str) -> bool:

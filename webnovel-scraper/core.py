@@ -1,38 +1,47 @@
 import importlib
-import os
+import os, sys
+from typing import List
 import pandas as pd
 from websites.website import Website
 
 
-def initiateClasses() -> list[Website]:
-    """Loads website instances from Python files in the 'websites' directory
+def initiateClasses(directory="./websites") -> List[Website]:
+    """Loads website instances from Python files in the given directory
+
+    Args:
+        directory (str): The directory to search for website files
 
     Returns:
-        list[Website]: A list of instantiated website objects
+        List[Website]: A list of instantiated website objects
     """
     website_instances = []
 
-    files = os.listdir("./websites")
+    # Get the absolute path of the directory
+    abs_directory = os.path.abspath(directory)
+
+    files = os.listdir(abs_directory)
 
     # Filter out all python files that start with 'website_'
     website_files = [f for f in files if f.startswith("website_") and f.endswith(".py")]
-    # print("Files", website_files)
 
     # Iterate over all website files
     for website_file in website_files:
+        file_path = os.path.join(abs_directory, website_file)
+        module_name = website_file[:-3]  # Remove .py extension
 
-        module_name = website_file[:-3]  # Remove .py extension and import the module
-        module = importlib.import_module(f"websites.{module_name}")
+        # Use importlib.util to load the module directly from the file path
+        spec = importlib.util.spec_from_file_location(module_name, file_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
 
         # Get the class name by removing 'website_' and capitalize the first letter
         class_name = module_name[len("website_") :].capitalize()
 
-        WebsiteClass: type[Website] = getattr(
-            module, class_name
-        )  # Get the class from the module
+        WebsiteClass = getattr(module, class_name)
 
         instance = WebsiteClass()
         website_instances.append(instance)
+
     return website_instances
 
 
@@ -49,8 +58,10 @@ def searchWebsites(
         pd.DataFrame
     """
     results = []
+
     for website in website_instances:
         hits = website.search(search)
+
         for hit in hits:
             hit.append(website)
             results.append(hit)
@@ -78,7 +89,6 @@ def searchWebsites(
         ],
     )
 
-    # df["Chapters"] = df["Chapters"].astype("int32")
     df["score"] = df["score"].astype("float32")
 
     df.index += 1

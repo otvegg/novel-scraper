@@ -4,7 +4,7 @@ from alive_progress import alive_bar
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
-from .website import Website
+from websites.website import Website
 import helpers
 from requests_futures.sessions import FuturesSession
 import logging
@@ -14,9 +14,9 @@ import time
 class Freewebnovel(Website):
     def __init__(self):
         super().__init__()
-        self.chapterUrl = "https://freewebnovel.comenovel.com"
+        self.chapterUrl = "https://freewebnovel.com"
         self.url = "https://freewebnovel.com"
-        self.searchUrl = self.url + "/search/"
+        self.searchUrl = self.url + "/search"
         self.BATCH_SIZE = 25
         self.WAIT_TIME = 10
         self.RATELIMIT = 3
@@ -27,15 +27,14 @@ class Freewebnovel(Website):
         response = requests.post(
             self.searchUrl, data=payload, headers=self.headers
         )  # , timeout=1)
+        # print("req", response.request.body)
 
         soup = BeautifulSoup(response.text, "html.parser")
-
-        #
+        # print(soup)
         searchResults = soup.select(
             "body > div.main > div.wp > div.row-box > div.col-content > div > div > div > div > div.txt"
         )
-
-        # TODO: Estimate download time (chapters * average scrape time)
+        # print(soup)
 
         table = []
         for book in searchResults:
@@ -54,7 +53,7 @@ class Freewebnovel(Website):
                     self.chapterUrl + i.get("href").replace(".html", "")
                 )
 
-            estimatedDownload = len(chapterLinks) * 0.5
+            estimatedDownload = len(chapterLinks) * 1 / self.RATELIMIT
 
             bookInfo = bookSoup.select_one(
                 "body > div.main > div > div > div.col-content > div.m-info > div.m-book1"
@@ -169,6 +168,7 @@ class Freewebnovel(Website):
 
     def scrape_novel(self):
         nChapters = len(self.novel["Chapters"])
+
         chapterUrls = self.novel["Chapters"]
 
         session = FuturesSession(max_workers=self.BATCH_SIZE)
