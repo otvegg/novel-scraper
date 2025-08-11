@@ -1,12 +1,12 @@
-# WebNovel Webscraper
+# Novel Webscraper
 
 Currently, the scraper supports one website, but there are plans to add more in the future.
 
 ## Features
 
-- Scrape webnovels from supported websites
-- Download and save webnovels for offline reading
-- Convert webnovels into PDF or EPUB formats
+- Scrape Novel from supported websites
+- Download and save Novel for offline reading
+- Convert Novel into PDF or EPUB formats
 - Compatible with various devices (phones, Kindles, etc.)
 
 ## Installation
