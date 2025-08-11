@@ -30,9 +30,8 @@ This section tracks the progress of adding support for different websites. The s
 | Website             | Status                                                   |
 | ------------------- | -------------------------------------------------------- |
 | freewebnovel.com    | ![#4fe10f](https://placehold.co/15x15/lime/lime.png)     |
-
 | https://www.gutenberg.org/    | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
-[comment]:| wuxiaworld.site     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
+[comment] :| wuxiaworld.site     | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 [comment]:| readnovelfull.com   | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 [comment]:| novelfull.com       | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
 [comment]:| novelfull.me        | ![#f03c15](https://placehold.co/15x15/f03c15/f03c15.png) |
